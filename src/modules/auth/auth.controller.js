@@ -1,11 +1,20 @@
+const jwt = require("jsonwebtoken");
+const RefreshToken = require("../../models/refreshToken");
 const authService = require("./auth.service");
 
 exports.register = async (req, res) => {
   try {
     const user = await authService.register(req.body);
-    res.json({ message: "Register success", user });
+    res.json({
+      success: true,
+      message: "Register success",
+      data: user,
+    });
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
   }
 };
 
@@ -13,44 +22,59 @@ exports.login = async (req, res) => {
   try {
     const result = await authService.login(req.body);
     res.json({
-      succes: true,
+      success: true,
       message: "Login successful",
       data: result,
     });
   } catch (err) {
     res.status(400).json({
-      succes: false,
+      success: false,
       message: err.message,
-      errorCode: err.code || null
+      errorCode: err.code || null,
     });
   }
 };
 
-exports.refeshToken = (req, res) => {
+exports.refreshToken = async (req, res) => {
   try {
-    const {refeshToken} = res.body;
-    
-    if (!refeshToken) throw new Error("No refresh token");
+    const { refreshToken } = req.body;
+    if (!refreshToken) throw new Error("No refresh token");
+
+    const stored = await RefreshToken.findOne({ token: refreshToken });
+    if (!stored) throw new Error("Refresh token revoked");
 
     const decoded = jwt.verify(
-      refeshToken,
-      ProcessingInstruction.env.JWT_REFRESH_SECRET
+      refreshToken,
+      process.env.JWT_REFRESH_SECRET
     );
 
     const newAccessToken = jwt.sign(
-      {id: decoded.id},
+      { id: decoded.id },
       process.env.JWT_SECRET,
-      {expiresIn: "15m"}
+      { expiresIn: "15m" }
     );
 
     res.json({
       success: true,
-      data: {accessToken: newAccessToken}
+      data: { accessToken: newAccessToken },
     });
-  } catch {
+  } catch (err) {
     res.status(401).json({
-      succes: false,
-      message: "Invalid refresh token"
+      success: false,
+      message: err.message || "Invalid refresh token",
     });
   }
+};
+
+exports.logout = async (req, res) => {
+  const { refreshToken } = req.body;
+
+  if (refreshToken) {
+    await RefreshToken.deleteOne({ token: refreshToken });
+  }
+
+  res.json({
+    success: true,
+    message: "Logged out",
+  });
 };

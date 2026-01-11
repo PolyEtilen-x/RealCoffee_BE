@@ -5,5 +5,6 @@ const controller = require("./auth.controller");
 router.post("/register", controller.register);
 router.post("/login", controller.login);
 router.post("/refresh", controller.refreshToken);
+router.post("/logout", controller.logout);
 
 module.exports = router;

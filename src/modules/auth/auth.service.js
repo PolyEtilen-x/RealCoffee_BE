@@ -1,6 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../../models/auth");
+const RefreshToken = require("../../models/refreshToken");
 
 //handle to create and refesh token
 const createAccessToken = (user) =>
@@ -36,22 +37,31 @@ exports.register = async ({ email, password, role }) => {
 
 exports.login = async ({ email, password }) => {
   const user = await User.findOne({ email });
-  if (!user) throw Object.assign(new Error("User not found"), { code: "USER_NOT_FOUND" });
+  if (!user) throw new Error("User not found");
 
   const match = await bcrypt.compare(password, user.password);
-  if (!match) throw Object.assign(new Error("Wrong password"), { code: "WRONG_PASSWORD" });
+  if (!match) throw new Error("Wrong password");
 
   if (user.role === "seller" && user.status !== "approved") {
-    throw Object.assign(new Error("Seller not approved yet"), { code: "SELLER_PENDING" });
+    throw new Error("Seller not approved yet");
   }
 
-  return  {
-    accessToken: createAccessToken(user),
-    refeshToken: createRefreshToken(user),
+  const accessToken = createAccessToken(user);
+  const refreshToken = createRefreshToken(user);
+
+  await RefreshToken.create({
+    userId: user._id,
+    token: refreshToken,
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+  });
+
+  return {
+    accessToken,
+    refreshToken,
     user: {
       id: user._id,
       email: user.email,
-      role: user.role
-    }
-  }
+      role: user.role,
+    },
+  };
 };
