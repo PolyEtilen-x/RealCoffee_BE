@@ -25,3 +25,32 @@ exports.login = async (req, res) => {
     });
   }
 };
+
+exports.refeshToken = (req, res) => {
+  try {
+    const {refeshToken} = res.body;
+    
+    if (!refeshToken) throw new Error("No refresh token");
+
+    const decoded = jwt.verify(
+      refeshToken,
+      ProcessingInstruction.env.JWT_REFRESH_SECRET
+    );
+
+    const newAccessToken = jwt.sign(
+      {id: decoded.id},
+      process.env.JWT_SECRET,
+      {expiresIn: "15m"}
+    );
+
+    res.json({
+      success: true,
+      data: {accessToken: newAccessToken}
+    });
+  } catch {
+    res.status(401).json({
+      succes: false,
+      message: "Invalid refresh token"
+    });
+  }
+};
