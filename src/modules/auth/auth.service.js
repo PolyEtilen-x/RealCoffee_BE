@@ -18,7 +18,7 @@ exports.register = async ({ email, password, role }) => {
   return user;
 };
 
-exports.login = async ({ email, password }) => {
+exports.login = async ({ req, res }) => {
   const user = await User.findOne({ email });
   if (!user) throw new Error("User not found");
 

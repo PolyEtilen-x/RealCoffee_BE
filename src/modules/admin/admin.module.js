@@ -6,6 +6,7 @@ const {
   checkRole,
 } = require("../../middleware/auth.middleware");
 
+//check login 
 router.use(checkAuth);
 router.use(checkRole("admin"));
 

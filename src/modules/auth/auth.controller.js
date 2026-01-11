@@ -12,8 +12,16 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const result = await authService.login(req.body);
-    res.json(result);
+    res.json({
+      succes: true,
+      message: "Login successful",
+      data: result,
+    });
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    res.status(400).json({
+      succes: false,
+      message: err.message,
+      errorCode: err.code || null
+    });
   }
 };
