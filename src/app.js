@@ -8,6 +8,7 @@ app.use(express.json());
 
 app.use("/api/auth", require("./modules/auth/auth.module"))
 app.use("/api/admin", require("./modules/admin/admin.module"));
+app.use("/api/seller", require("./modules/seller/seller.module"))
 
 app.get("/", (req, res) => {
   res.send("Real Coffee API running");
