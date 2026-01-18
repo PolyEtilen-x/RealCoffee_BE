@@ -19,7 +19,7 @@ const createRefreshToken = (user) =>
   );
 
 
-exports.register = async ({ email, password, role }) => {
+exports.register = async ({ email, password }) => {
   const exists = await User.findOne({ email });
   if (exists) throw new Error("Email already exists");
 
@@ -28,12 +28,13 @@ exports.register = async ({ email, password, role }) => {
   const user = await User.create({
     email,
     password: hashed,
-    role,
-    status: role === "seller" ? "pending" : "approved",
+    role: "user",
+    status: "approved",
   });
 
   return user;
 };
+
 
 exports.login = async ({ email, password }) => {
   const user = await User.findOne({ email });
