@@ -20,8 +20,15 @@ const createRefreshToken = (user) =>
 
 
 exports.register = async ({ email, password }) => {
+  console.log(
+    `[REGISTER] Request received | email=${email} | time=${new Date().toISOString()}`
+  );
+
   const exists = await User.findOne({ email });
-  if (exists) throw new Error("Email already exists");
+  if (exists) {
+    console.log(`[REGISTER] FAILED - Email already exists: ${email}`);
+    throw new Error("Email already exists");
+  }
 
   const hashed = await bcrypt.hash(password, 10);
 
@@ -46,6 +53,10 @@ exports.login = async ({ email, password }) => {
   if (user.role === "seller" && user.status !== "approved") {
     throw new Error("Seller not approved yet");
   }
+
+  console.log(
+    `[LOGIN] SUCCESS | id=${user._id} | email=${user.email} | role=${user.role}`
+  );
 
   const accessToken = createAccessToken(user);
   const refreshToken = createRefreshToken(user);
