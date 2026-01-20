@@ -18,6 +18,27 @@ exports.register = async (req, res) => {
   }
 };
 
+exports.registerSeller = async (req, res) => {
+  try {
+    console.log("[REGISTER SELLER]", req.body);
+
+    const result = await authService.registerSeller(req.body);
+
+    res.json({
+      success: true,
+      message: "Register seller success. Waiting for admin approval",
+      data: result,
+    });
+  } catch (err) {
+    console.error("[REGISTER SELLER ERROR]", err.message);
+
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
 exports.login = async (req, res) => {
   try {
     console.log('[LOGIN BODY]', req.body); 

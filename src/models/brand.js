@@ -2,14 +2,61 @@ const mongoose = require("mongoose");
 
 const BrandSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true },
-    description: { type: String },
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    description: {
+      type: String,
+      trim: true,
+    },
+
     ownerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
-    isMainBrand: { type: Boolean, default: false },
+
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
+    },
+
+    isMainBrand: {
+      type: Boolean,
+      default: false, 
+    },
+
+    // brand info
+    logo: {
+      type: String,
+    },
+
+    phone: {
+      type: String,
+    },
+
+    address: {
+      type: String,
+    },
+
+    taxCode: {
+      type: String,
+    },
+
+    // commission other brand
+    revenue: {
+      type: Number,
+      default: 0,
+    },
+
+    commissionRate: {
+      type: Number,
+      default: 0.05,
+    },
   },
   { timestamps: true }
 );
