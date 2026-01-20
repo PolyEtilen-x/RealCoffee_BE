@@ -22,8 +22,6 @@ exports.register = async (req, res) => {
 
 exports.registerSeller = async (req, res) => {
   try {
-    console.log("[REGISTER SELLER]", req.body);
-
     let logoUrl = null;
     let licenseUrl = null;
 
@@ -31,23 +29,21 @@ exports.registerSeller = async (req, res) => {
       logoUrl = await uploadBuffer(
         req.files.logo[0].buffer,
         "realcoffee/brands/logo"
-      )
+      );
     }
 
     if (req.files?.licenseImage?.[0]) {
       licenseUrl = await uploadBuffer(
         req.files.licenseImage[0].buffer,
         "realcoffee/brands/license"
-      )
+      );
     }
 
-    const result = await authService.registerSeller(
-      {
-        ...req.body,
-        logoUrl,
-        licenseUrl
-      }
-    );
+    const result = await authService.registerSeller({
+      ...req.body,
+      logoUrl,
+      licenseUrl,
+    });
 
     res.json({
       success: true,
@@ -56,7 +52,6 @@ exports.registerSeller = async (req, res) => {
     });
   } catch (err) {
     console.error("[REGISTER SELLER ERROR]", err.message);
-
     res.status(400).json({
       success: false,
       message: err.message,

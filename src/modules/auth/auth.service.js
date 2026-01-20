@@ -46,20 +46,24 @@ exports.register = async ({ email, password }) => {
   return user;
 };
 
-exports.registerSeller = async ({ 
-  email, 
-  password, 
-  brandId, 
+exports.registerSeller = async ({
+  email,
+  password,
   brand,
   logoUrl,
   licenseUrl,
- }) => {
+}) => {
+  // check email
   const exists = await User.findOne({ email });
   if (exists) throw new Error("Email already exists");
 
+  if (!brand || !brand.name) {
+    throw new Error("Brand information is required");
+  }
+
   const hashed = await bcrypt.hash(password, 10);
 
-  // creater selller
+  // create seller account
   const user = await User.create({
     email,
     password: hashed,
@@ -67,50 +71,29 @@ exports.registerSeller = async ({
     status: "pending",
   });
 
-  let finalBrandId = null;
+  // create brand (LUÔN tạo mới)
+  const newBrand = await Brand.create({
+    name: brand.name,
+    description: brand.description,
+    phone: brand.phone,
+    address: brand.address,
+    taxCode: brand.taxCode,
 
-  // choose brand available
-  if (brandId) {
-    const existedBrand = await Brand.findById(brandId);
-    if (!existedBrand) throw new Error("Brand not found");
+    logo: logoUrl,                
+    licenseImage: licenseUrl,     
 
-    finalBrandId = existedBrand._id;
-  }
+    ownerId: user._id,
+    status: "pending",
+    isMainBrand: false,
+  });
 
-  // create new brand
-  if (brand) {
-    if (!brand.name) {
-      throw new Error("Brand name is required");
-    }
-
-    const newBrand = await Brand.create({
-      name: brand.name,
-      description: brand.description,
-      phone: brand.phone,
-      address: brand.address,
-      taxCode: brand.taxCode,
-
-      logo: brand.logoUrl,
-      license: brand.licenseUrl,
-
-      ownerId: user._id,
-      status: "pending",
-      isMainBrand: false,
-    });
-
-    finalBrandId = newBrand._id;
-  }
-
-  if (!finalBrandId) {
-    throw new Error("Brand information is required");
-  }
-
-  user.brandId = finalBrandId;
+  // link seller ↔ brand
+  user.brandId = newBrand._id;
   await user.save();
 
   return {
     userId: user._id,
-    brandId: finalBrandId,
+    brandId: newBrand._id,
   };
 };
 
