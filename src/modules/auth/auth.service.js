@@ -46,7 +46,14 @@ exports.register = async ({ email, password }) => {
   return user;
 };
 
-exports.registerSeller = async ({ email, password, brandId, brand }) => {
+exports.registerSeller = async ({ 
+  email, 
+  password, 
+  brandId, 
+  brand,
+  logoUrl,
+  licenseUrl,
+ }) => {
   const exists = await User.findOne({ email });
   if (exists) throw new Error("Email already exists");
 
@@ -82,6 +89,10 @@ exports.registerSeller = async ({ email, password, brandId, brand }) => {
       phone: brand.phone,
       address: brand.address,
       taxCode: brand.taxCode,
+
+      logo: brand.logoUrl,
+      license: brand.licenseUrl,
+
       ownerId: user._id,
       status: "pending",
       isMainBrand: false,

@@ -1,6 +1,8 @@
 const jwt = require("jsonwebtoken");
 const RefreshToken = require("../../models/refreshToken");
 const authService = require("./auth.service");
+const {uploadBuffer} = require("../../utils/cloudinaryUpload");
+const upload = require("../../middleware/upload.middleware");
 
 exports.register = async (req, res) => {
   try {
@@ -22,7 +24,30 @@ exports.registerSeller = async (req, res) => {
   try {
     console.log("[REGISTER SELLER]", req.body);
 
-    const result = await authService.registerSeller(req.body);
+    let logoUrl = null;
+    let licenseUrl = null;
+
+    if (req.files?.logo?.[0]) {
+      logoUrl = await uploadBuffer(
+        req.files.logo[0].buffer,
+        "realcoffee/brands/logo"
+      )
+    }
+
+    if (req.files?.licenseImage?.[0]) {
+      licenseUrl = await uploadBuffer(
+        req.files.licenseImage[0].buffer,
+        "realcoffee/brands/license"
+      )
+    }
+
+    const result = await authService.registerSeller(
+      {
+        ...req.body,
+        logoUrl,
+        licenseUrl
+      }
+    );
 
     res.json({
       success: true,

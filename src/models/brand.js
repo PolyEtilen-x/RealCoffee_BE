@@ -35,6 +35,10 @@ const BrandSchema = new mongoose.Schema(
       type: String,
     },
 
+    licenseImage: {
+      type: String,
+    },
+
     phone: {
       type: String,
     },
@@ -56,6 +60,10 @@ const BrandSchema = new mongoose.Schema(
     commissionRate: {
       type: Number,
       default: 0.05,
+    },
+
+    rejectReason: {
+      type: String,
     },
   },
   { timestamps: true }

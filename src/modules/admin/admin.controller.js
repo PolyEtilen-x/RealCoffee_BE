@@ -9,20 +9,34 @@ exports.getPendingSellers = async (req, res) => {
   }
 };
 
-exports.approveSeller = async (req, res) => {
+exports.approveBrand = async (req, res) => {
   try {
-    const seller = await adminService.approveSeller(req.params.id);
-    res.json({ message: "Seller approved", seller });
+    const result = await adminService.approveBrand(req.params.brandId);
+    res.json({
+      message: "Brand approved",
+      data: result,
+    });
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 };
 
-exports.createBrand = async (req, res) => {
+exports.rejectBrand = async (req, res) => {
   try {
-    const brand = await adminService.createBrand(req.body);
-    res.json({ message: "Brand created", brand });
+    const { brandId } = req.params;
+    const { reason } = req.body; 
+
+    const result = await adminService.rejectBrand(brandId, reason);
+
+    res.json({
+      success: true,
+      message: "Brand rejected",
+      data: result,
+    });
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
   }
 };
