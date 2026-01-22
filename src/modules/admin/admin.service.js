@@ -1,11 +1,11 @@
 const User = require("../../models/auth");
 const Brand = require("../../models/brand");
 
-//get user in pending
-exports.getPendingSellers = async () => {
-  return User.find({ role: "seller", status: "pending" })
-    .select("-password")
-    .populate("brandId");
+//get brands in pending
+exports.getPendingBrands = async () => {
+  return Brand.find({ status: "pending" })
+    .populate("ownerId", "email")
+    .sort({ createdAt: -1});
 };
 
 //check new brand

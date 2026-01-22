@@ -10,9 +10,8 @@ const {
 router.use(checkAuth);
 router.use(checkRole("admin"));
 
-router.get("/pending-sellers", controller.getPendingSellers);
-
-router.patch("/approve-brand/:brandId", controller.approveBrand);
-router.patch("/reject-brand/:brandId", controller.rejectBrand);
+router.patch("/brands/pending", controller.getPendingBrands);
+router.patch("/brands/:brandId/approve", controller.approveBrand);
+router.patch("/brands/:brandId/reject", controller.rejectBrand);
 
 module.exports = router;

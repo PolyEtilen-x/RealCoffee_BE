@@ -1,9 +1,12 @@
 const adminService = require("./admin.service");
 
-exports.getPendingSellers = async (req, res) => {
+exports.getPendingBrands = async (req, res) => {
   try {
-    const sellers = await adminService.getPendingSellers();
-    res.json(sellers);
+    const brands = await adminService.getPendingBrands();
+    res.json({
+      success: true,
+      data: brands,
+    });
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
@@ -11,8 +14,11 @@ exports.getPendingSellers = async (req, res) => {
 
 exports.approveBrand = async (req, res) => {
   try {
+    const { brandId } = req.params;
     const result = await adminService.approveBrand(req.params.brandId);
+    
     res.json({
+      success: true,
       message: "Brand approved",
       data: result,
     });
@@ -34,9 +40,6 @@ exports.rejectBrand = async (req, res) => {
       data: result,
     });
   } catch (err) {
-    res.status(400).json({
-      success: false,
-      message: err.message,
-    });
+    res.status(400).json({ message: err.message });
   }
 };
