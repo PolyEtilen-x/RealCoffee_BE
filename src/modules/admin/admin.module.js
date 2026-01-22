@@ -10,7 +10,7 @@ const {
 router.use(checkAuth);
 router.use(checkRole("admin"));
 
-router.patch("/brands/pending", controller.getPendingBrands);
+router.get("/brands/pending", controller.getPendingBrands);
 router.patch("/brands/:brandId/approve", controller.approveBrand);
 router.patch("/brands/:brandId/reject", controller.rejectBrand);
 
