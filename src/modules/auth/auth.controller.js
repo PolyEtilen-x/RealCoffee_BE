@@ -61,24 +61,31 @@ exports.registerSeller = async (req, res) => {
 
 exports.login = async (req, res) => {
   try {
-    console.log('[LOGIN BODY]', req.body); 
+    console.log("[LOGIN CONTROLLER] Request body:", {
+      email: req.body.email,
+    });
 
     const result = await authService.login(req.body);
 
-    console.log('[LOGIN SUCCESS]', result.user.email); 
+    console.log(
+      "[LOGIN CONTROLLER] Success | userId:",
+      result.user.id,
+      "| role:",
+      result.user.role
+    );
+
     res.json({
       success: true,
       data: result,
     });
   } catch (err) {
-    console.error('[LOGIN ERROR]', err.message); 
-    res.status(400).json({
+    console.error("[LOGIN CONTROLLER] Error:", err.message);
+    res.status(401).json({
       success: false,
       message: err.message,
     });
   }
 };
-
 
 exports.refreshToken = async (req, res) => {
   try {

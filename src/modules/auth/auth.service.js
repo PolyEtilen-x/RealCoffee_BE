@@ -7,13 +7,14 @@ const Brand = require("../../models/brand");
 //handle to create and refesh token
 const createAccessToken = (user) =>
   jwt.sign(
-    { id: user._id, 
-      role: user.role, 
-      brandId: user.brandId ? user.brandId._id : null,
+    { 
+      id: user._id, 
+      role: user.role
     },
     process.env.JWT_SECRET,
     { expiresIn: "15m" }
   );
+
 
 const createRefreshToken = (user) =>
   jwt.sign(
@@ -22,28 +23,36 @@ const createRefreshToken = (user) =>
     { expiresIn: "7d" }
   );
 
-
 exports.register = async ({ email, password }) => {
-  console.log(
-    `[REGISTER] Request received | email=${email} | time=${new Date().toISOString()}`
-  );
+  console.log("[REGISTER USER] Start | email:", email);
+
+  if (!email || !password) {
+    console.log("[REGISTER USER] Missing email or password");
+    throw new Error("Email and password are required");
+  }
 
   const exists = await User.findOne({ email });
   if (exists) {
-    console.log(`[REGISTER] FAILED - Email already exists: ${email}`);
+    console.log("[REGISTER USER] Email already exists:", email);
     throw new Error("Email already exists");
   }
 
   const hashed = await bcrypt.hash(password, 10);
+  console.log("[REGISTER USER] Password hashed");
 
   const user = await User.create({
     email,
     password: hashed,
     role: "user",
-    status: "approved",
   });
 
-  return user;
+  console.log("[REGISTER USER] Success | userId:", user._id);
+
+  return {
+    id: user._id,
+    email: user.email,
+    role: user.role,
+  };
 };
 
 exports.registerSeller = async ({
@@ -71,7 +80,7 @@ exports.registerSeller = async ({
     status: "pending",
   });
 
-  // create brand (LUÔN tạo mới)
+  // create brand 
   const newBrand = await Brand.create({
     name: brand.name,
     description: brand.description,
@@ -87,7 +96,6 @@ exports.registerSeller = async ({
     isMainBrand: false,
   });
 
-  // link seller ↔ brand
   user.brandId = newBrand._id;
   await user.save();
 
@@ -98,21 +106,38 @@ exports.registerSeller = async ({
 };
 
 exports.login = async ({ email, password }) => {
-  const user = await User.findOne({ email }).populate("brandId");
-  if (!user) throw new Error("User not found");
+  console.log("[LOGIN] Start | email:", email);
+
+  if (!email || !password) {
+    console.log("[LOGIN] Missing credentials");
+    throw new Error("Invalid email or password");
+  }
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    console.log("[LOGIN] User not found:", email);
+    throw new Error("Invalid email or password");
+  }
 
   const match = await bcrypt.compare(password, user.password);
-  if (!match) throw new Error("Wrong password");
-
-  if (user.role === "seller" && user.status !== "approved") {
-    throw new Error("Seller not approved yet");
+  if (!match) {
+    console.log("[LOGIN] Wrong password | userId:", user._id);
+    throw new Error("Invalid email or password");
   }
 
   console.log(
-    `[LOGIN] SUCCESS | id=${user._id} | email=${user.email} | role=${user.role}`
+    "[LOGIN] Credentials valid | userId:",
+    user._id,
+    "| role:",
+    user.role
   );
 
-  const accessToken = createAccessToken(user);
+  const accessToken = jwt.sign(
+    { id: user._id, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: "15m" }
+  );
+
   const refreshToken = createRefreshToken(user);
 
   await RefreshToken.create({
@@ -121,6 +146,8 @@ exports.login = async ({ email, password }) => {
     expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
   });
 
+  console.log("[LOGIN] Token issued | userId:", user._id);
+
   return {
     accessToken,
     refreshToken,
@@ -128,7 +155,6 @@ exports.login = async ({ email, password }) => {
       id: user._id,
       email: user.email,
       role: user.role,
-      brandId: user.brandId ? user.brandId._id : null
     },
   };
 };

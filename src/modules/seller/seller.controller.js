@@ -1,4 +1,31 @@
 const sellerService = require("./seller.service");
+const Brand = require("../../models/brand");
+
+exports.getBrandStatus = async (req, res) => {
+  const userId = req.user.id;
+
+  const brand = await Brand.findOne({ ownerId: userId });
+
+  if (!brand) {
+    return res.json({ status: 'none' });
+  }
+
+  if (brand.status === 'pending') {
+    return res.json({ status: 'pending', brand });
+  }
+
+  if (brand.status === 'rejected') {
+    return res.json({
+      status: 'rejected',
+      brand,
+      reason: brand.rejectReason || 'Không có lý do'
+    });
+  }
+
+  if (brand.status === 'approved') {
+    return res.json({ status: 'approved', brand });
+  }
+};
 
 exports.createProduct = async (req, res) => {
   try {
@@ -30,3 +57,4 @@ exports.approveOrder = async (req, res) => {
     res.status(400).json({ message: err.message });
   }
 };
+

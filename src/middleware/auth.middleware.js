@@ -1,28 +1,46 @@
 const jwt = require("jsonwebtoken");
 
-exports.checkAuth = (req, res, next) => {
-  const token = req.headers.authorization?.split(" ")[1];
-  if (!token) return res.status(401).json({ message: "No token" });
+exports.authenticate = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ message: "Missing Authorization header" });
+  }
+
+  const token = authHeader.split(" ")[1];
+  if (!token) {
+    return res.status(401).json({ message: "Missing token" });
+  }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
+
+    req.user = {
+      id: decoded.id,
+      role: decoded.role,
+    };
+
+    if (!req.user.role) {
+      return res.status(403).json({ message: "Role not found in token" });
+    }
+
     next();
-  } catch {
-    res.status(401).json({ message: "Invalid token" });
+  } catch (err) {
+    return res.status(401).json({
+      message: "Invalid or expired token",
+    });
   }
 };
 
-exports.checkRole = (role) => (req, res, next) => {
-  if (req.user.role !== role) {
-    return res.status(403).json({ message: "Forbidden" });
-  }
-  next();
-};
+exports.authorize = (...allowedRoles) => {
+  return (req, res, next) => {
+    if (!req.user || !req.user.role) {
+      return res.status(403).json({ message: "Access denied" });
+    }
 
-exports.isAdmin = (req, res, next) => {
-  if (req.user.role !== "admin") {
-    return res.status(403).json({ message: "Admin only" });
-  }
-  next();
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ message: "Permission denied" });
+    }
+
+    next();
+  };
 };

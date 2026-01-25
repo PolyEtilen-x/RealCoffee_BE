@@ -9,6 +9,7 @@ const {
 router.use(checkAuth);
 router.use(checkRole("seller"));
 
+router.get("/brand-status", controller.getBrandStatus);
 router.post("/products", controller.createProduct);
 router.get("/products", controller.getMyProducts);
 

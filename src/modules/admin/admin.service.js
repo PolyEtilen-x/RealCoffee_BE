@@ -80,3 +80,37 @@ exports.rejectBrand = async (brandId, reason) => {
     seller,
   };
 };
+
+exports.getApprovedBrands = async () => {
+  return Brand.find({ status: "approved" })
+    .populate("ownerId", "email")
+    .sort({ createdAt: -1 });
+};
+
+exports.updateBrand = async (brandId, data) => {
+  const brand = await Brand.findById(brandId);
+  if (!brand) throw new Error("Brand not found");
+
+  if (data.name !== undefined) brand.name = data.name;
+  if (data.logo !== undefined) brand.logo = data.logo;
+  if (data.licenseImage !== undefined)
+    brand.licenseImage = data.licenseImage;
+  if (data.description !== undefined)
+    brand.description = data.description;
+
+  await brand.save();
+  return brand;
+};
+
+exports.deleteBrand = async (brandId) => {
+  const brand = await Brand.findById(brandId);
+  if (!brand) throw new Error("Brand not found");
+
+  await User.updateOne(
+    { _id: brand.ownerId },
+    { $unset: { brandId: "" } }
+  );
+
+  await brand.deleteOne();
+};
+
