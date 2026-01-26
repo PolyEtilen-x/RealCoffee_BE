@@ -3,7 +3,7 @@ const Product = require("../../models/product");
 const Order = require("../../models/order");
 
 exports.getBrands = async () => {
-  return Brand.find();
+  return Brand.find({ status: "approved" });
 };
 
 exports.getProductsByBrand = async (brandId) => {
