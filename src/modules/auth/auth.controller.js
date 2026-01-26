@@ -22,6 +22,11 @@ exports.register = async (req, res) => {
 
 exports.registerSeller = async (req, res) => {
   try {
+    console.log("[REGISTER SELLER CONTROLLER] Body:", {
+      email: req.body.email,
+      brand: req.body.brand?.name,
+    });
+
     let logoUrl = null;
     let licenseUrl = null;
 
@@ -52,6 +57,7 @@ exports.registerSeller = async (req, res) => {
     });
   } catch (err) {
     console.error("[REGISTER SELLER ERROR]", err.message);
+    
     res.status(400).json({
       success: false,
       message: err.message,

@@ -1,14 +1,15 @@
 const express = require("express");
 const router = express.Router();
 const controller = require("./admin.controller");
+
 const {
-  checkAuth,
-  checkRole,
+  authenticate,
+  authorize,
 } = require("../../middleware/auth.middleware");
 
 //check login 
-router.use(checkAuth);
-router.use(checkRole("admin"));
+router.use(authenticate);
+router.use(authorize("admin"));
 
 router.get("/brands/approved", controller.getApprovedBrands);
 

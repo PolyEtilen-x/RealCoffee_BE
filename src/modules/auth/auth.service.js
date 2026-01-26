@@ -62,47 +62,104 @@ exports.registerSeller = async ({
   logoUrl,
   licenseUrl,
 }) => {
-  // check email
-  const exists = await User.findOne({ email });
-  if (exists) throw new Error("Email already exists");
+  console.log("[REGISTER SELLER] Start | email:", email);
 
-  if (!brand || !brand.name) {
-    throw new Error("Brand information is required");
+  // check exist
+  if (!email || !password || !brand?.name) {
+    console.log("[REGISTER SELLER] Missing required data");
+    throw new Error("Invalid register seller data");
   }
 
-  const hashed = await bcrypt.hash(password, 10);
+  const exists = await User.findOne({ email });
+  if (exists) {
+    console.log("[REGISTER SELLER] Email already exists:", email);
+    throw new Error("Email already exists");
+  }
 
-  // create seller account
-  const user = await User.create({
-    email,
-    password: hashed,
-    role: "seller",
-    status: "pending",
-  });
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-  // create brand 
-  const newBrand = await Brand.create({
-    name: brand.name,
-    description: brand.description,
-    phone: brand.phone,
-    address: brand.address,
-    taxCode: brand.taxCode,
+  try {
+    // 1. create seller account
+    const hashed = await bcrypt.hash(password, 10);
 
-    logo: logoUrl,                
-    licenseImage: licenseUrl,     
+    const seller = await User.create(
+      [
+        {
+          email,
+          password: hashed,
+          role: "seller",
+        },
+      ],
+      { session }
+    );
 
-    ownerId: user._id,
-    status: "pending",
-    isMainBrand: false,
-  });
+    console.log("[REGISTER SELLER] Seller created:", seller[0]._id);
 
-  user.brandId = newBrand._id;
-  await user.save();
+    // 2. create brand
+    const newBrand = await Brand.create(
+      [
+        {
+          name: brand.name,
+          description: brand.description,
+          phone: brand.phone,
+          address: brand.address,
+          taxCode: brand.taxCode,
+          logo: logoUrl,
+          licenseImage: licenseUrl,
+          ownerId: seller[0]._id,
+          status: "pending",
+        },
+      ],
+      { session }
+    );
 
-  return {
-    userId: user._id,
-    brandId: newBrand._id,
-  };
+    console.log("[REGISTER SELLER] Brand created:", newBrand[0]._id);
+
+    // 3. commit
+    await session.commitTransaction();
+    session.endSession();
+
+    // 4. issue JWT
+    const accessToken = jwt.sign(
+      {
+        id: seller[0]._id,
+        role: "seller",
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "15m" }
+    );
+
+    const refreshToken = createRefreshToken(seller[0]);
+
+    await RefreshToken.create({
+      userId: seller[0]._id,
+      token: refreshToken,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    });
+
+    console.log("[REGISTER SELLER] Token issued");
+
+    return {
+      accessToken,
+      refreshToken,
+      user: {
+        id: seller[0]._id,
+        email: seller[0].email,
+        role: "seller",
+      },
+      brand: {
+        id: newBrand[0]._id,
+        status: "pending",
+      },
+    };
+  } catch (err) {
+    await session.abortTransaction();
+    session.endSession();
+
+    console.error("[REGISTER SELLER] Failed:", err.message);
+    throw err;
+  }
 };
 
 exports.login = async ({ email, password }) => {

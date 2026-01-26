@@ -64,6 +64,7 @@ const BrandSchema = new mongoose.Schema(
 
     rejectReason: {
       type: String,
+      default: null,
     },
   },
   { timestamps: true }

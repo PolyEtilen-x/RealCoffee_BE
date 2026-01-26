@@ -1,27 +1,41 @@
 const Product = require("../../models/product");
 const Order = require("../../models/order");
+const Brand = require("../../models/brand");
 
-exports.createProduct = async (seller, data) => {
-  if (!seller.brandId) throw new Error("Seller has no brand");
+exports.createProduct = async (sellerId, data) => {
+  const brand = await Brand.findOne({ ownerId: sellerId });
+
+  if (!brand) {
+    throw new Error("Brand not found");
+  }
 
   return Product.create({
     ...data,
-    brandId: seller.brandId,
+    brandId: brand._id,
   });
 };
 
-exports.getMyProducts = async (seller) => {
-  return Product.find({ brandId: seller.brandId });
+exports.getMyProducts = async (sellerId) => {
+  const brand = await Brand.findOne({ ownerId: sellerId });
+  if (!brand) return [];
+
+  return Product.find({ brandId: brand._id });
 };
 
-exports.getBrandOrders = async (seller) => {
-  return Order.find({ brandId: seller.brandId });
+exports.getBrandOrders = async (sellerId) => {
+  const brand = await Brand.findOne({ ownerId: sellerId });
+  if (!brand) return [];
+
+  return Order.find({ brandId: brand._id });
 };
 
-exports.approveOrder = async (seller, orderId) => {
+exports.approveOrder = async (sellerId, orderId) => {
+  const brand = await Brand.findOne({ ownerId: sellerId });
+  if (!brand) throw new Error("Brand not found");
+
   const order = await Order.findOne({
     _id: orderId,
-    brandId: seller.brandId,
+    brandId: brand._id,
   });
 
   if (!order) throw new Error("Order not found");
