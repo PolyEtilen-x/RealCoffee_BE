@@ -1,27 +1,22 @@
 const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const User = require("../../models/auth");
 const RefreshToken = require("../../models/refreshToken");
 const Brand = require("../../models/brand");
 
-//handle to create and refesh token
-const createAccessToken = (user) =>
-  jwt.sign(
-    { 
-      id: user._id, 
-      role: user.role
-    },
+function generateRefreshToken() {
+  return crypto.randomBytes(64).toString("hex");
+}
+
+//handle to create token
+function createAccessToken(user) {
+  return jwt.sign(
+    { id: user._id, role: user.role },
     process.env.JWT_SECRET,
     { expiresIn: "15m" }
   );
-
-
-const createRefreshToken = (user) =>
-  jwt.sign(
-    { id: user._id },
-    process.env.JWT_REFRESH_SECRET,
-    { expiresIn: "7d" }
-  );
+}
 
 exports.register = async ({ email, password }) => {
   console.log("[REGISTER USER] Start | email:", email);
@@ -121,22 +116,18 @@ exports.registerSeller = async ({
     session.endSession();
 
     // 4. issue JWT
-    const accessToken = jwt.sign(
-      {
-        id: seller[0]._id,
-        role: "seller",
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: "15m" }
-    );
+    const accessToken = createAccessToken(seller[0]);
 
-    const refreshToken = createRefreshToken(seller[0]);
+    await RefreshToken.deleteOne({ userId: seller[0]._id });
+
+    const refreshToken = generateRefreshToken();
 
     await RefreshToken.create({
       userId: seller[0]._id,
       token: refreshToken,
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
+
 
     console.log("[REGISTER SELLER] Token issued");
 
@@ -166,36 +157,24 @@ exports.login = async ({ email, password }) => {
   console.log("[LOGIN] Start | email:", email);
 
   if (!email || !password) {
-    console.log("[LOGIN] Missing credentials");
     throw new Error("Invalid email or password");
   }
 
   const user = await User.findOne({ email });
   if (!user) {
-    console.log("[LOGIN] User not found:", email);
     throw new Error("Invalid email or password");
   }
 
   const match = await bcrypt.compare(password, user.password);
   if (!match) {
-    console.log("[LOGIN] Wrong password | userId:", user._id);
     throw new Error("Invalid email or password");
   }
 
-  console.log(
-    "[LOGIN] Credentials valid | userId:",
-    user._id,
-    "| role:",
-    user.role
-  );
+  const accessToken = createAccessToken(user);
 
-  const accessToken = jwt.sign(
-    { id: user._id, role: user.role },
-    process.env.JWT_SECRET,
-    { expiresIn: "15m" }
-  );
+  await RefreshToken.deleteOne({ userId: user._id });
 
-  const refreshToken = createRefreshToken(user);
+  const refreshToken = generateRefreshToken();
 
   await RefreshToken.create({
     userId: user._id,
