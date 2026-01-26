@@ -11,6 +11,13 @@ const {
 router.use(authenticate);
 router.use(authorize("admin"));
 
+//user management
+router.get("/users", controller.getUsers);
+router.post("/users", controller.createUser);
+router.patch("/users/:id", controller.updateUser);
+router.delete("/users/:id", controller.deleteUser)
+
+//brand management
 router.get("/brands/approved", controller.getApprovedBrands);
 
 router.get("/brands/pending", controller.getPendingBrands);

@@ -13,5 +13,7 @@ app.use("/api/user", require("./modules/user/user.module"))
 app.get("/", (req, res) => {
   res.send("Real Coffee API running");
 });
+require("./jobs/cleanupRejectedSellers.job");
+
 
 module.exports = app;

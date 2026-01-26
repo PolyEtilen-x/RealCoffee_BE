@@ -66,6 +66,12 @@ const BrandSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+
+    rejectedAt: {
+      type: Date,
+      default: null,
+    },
+
   },
   { timestamps: true }
 );
